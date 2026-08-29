@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 
 type Restaurant = {
@@ -38,22 +39,24 @@ export default async function Home() {
 
         <ul className="mt-8 flex flex-col gap-4">
           {restaurants?.map((restaurant: Restaurant) => (
-            <li
-              key={restaurant.id}
-              className="rounded-lg border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950"
-            >
-              <h2 className="text-lg font-medium text-black dark:text-zinc-50">
-                {restaurant.name}
-              </h2>
-              <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                {restaurant.city}
-                {restaurant.cuisine ? ` · ${restaurant.cuisine}` : ""}
-              </p>
-              {restaurant.description && (
-                <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-                  {restaurant.description}
+            <li key={restaurant.id}>
+              <Link
+                href={`/restaurants/${restaurant.id}`}
+                className="block rounded-lg border border-zinc-200 bg-white p-5 transition hover:border-zinc-300 dark:border-zinc-800 dark:bg-zinc-950 dark:hover:border-zinc-700"
+              >
+                <h2 className="text-lg font-medium text-black dark:text-zinc-50">
+                  {restaurant.name}
+                </h2>
+                <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                  {restaurant.city}
+                  {restaurant.cuisine ? ` · ${restaurant.cuisine}` : ""}
                 </p>
-              )}
+                {restaurant.description && (
+                  <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+                    {restaurant.description}
+                  </p>
+                )}
+              </Link>
             </li>
           ))}
         </ul>
