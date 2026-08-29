@@ -85,3 +85,39 @@ create policy "Public can view reviews" on reviews for select using (true);
 
 -- No policies on reservations yet on purpose: writes stay locked down until
 -- Phase 3 (auth) and Phase 4 (booking flow) add the right policies.
+
+-- Phase 3: customer accounts -------------------------------------------
+
+-- Extra profile info per user. Supabase manages auth.users itself (email,
+-- phone, password hash, etc.) -- app-specific fields like a display name
+-- live here instead, linked 1:1 to the auth user.
+create table profiles (
+  id uuid primary key references auth.users(id) on delete cascade,
+  full_name text,
+  phone text,
+  created_at timestamptz not null default now()
+);
+
+alter table profiles enable row level security;
+
+create policy "Users can view own profile" on profiles for select using (auth.uid() = id);
+create policy "Users can update own profile" on profiles for update using (auth.uid() = id);
+
+-- Automatically create a profile row whenever someone signs up, copying
+-- full_name/phone out of the metadata passed to supabase.auth.signUp().
+create function public.handle_new_user()
+returns trigger as $$
+begin
+  insert into public.profiles (id, full_name, phone)
+  values (
+    new.id,
+    new.raw_user_meta_data ->> 'full_name',
+    new.raw_user_meta_data ->> 'phone'
+  );
+  return new;
+end;
+$$ language plpgsql security definer set search_path = public;
+
+create trigger on_auth_user_created
+  after insert on auth.users
+  for each row execute procedure public.handle_new_user();
